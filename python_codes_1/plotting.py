@@ -1,18 +1,22 @@
+import os
 import matplotlib.pyplot as plt
 import extract_polarimetric
 import numpy as np
 import matplotlib.patches as patches
 from PIL import Image
-#import incidence_angle_corr
+import incidence_angle_corr
 #from matplotlib import rc
 #rc('font', **{'family':'serif','serif':['Palatino']})
 #rc('text', usetex=True)
 from scipy import signal
 import matplotlib.patches as patches
+import matplotlib.gridspec as gridspec
 #import read_RISAT1
 import math
 from math import pi
-
+import fit_inci_model
+import incidence_angle_corr
+import decomposition
 
 def plot_covariance_matrix_elements(window_size, inci_switch):
     arr=extract_polarimetric.extract_covariance_arr(window_size, inci_switch)
@@ -93,142 +97,232 @@ def plot_covariance_matrix_elements(window_size, inci_switch):
     plt.show()
 
 def cloude_pottier(window_size):
-    fig, ax = plt.subplots(nrows=3, ncols=3)
+    #fig, ax = plt.subplots(nrows=3, ncols=3)
     arr=extract_polarimetric.eigen_raster_full(window_size)
-    cov_arr=extract_polarimetric.extract_covariance_arr(window_size)
+    cov_arr=extract_polarimetric.extract_covariance_arr(window_size, False)
     
-    plt.subplot(3,3,1)
+    #plt.subplot(3,3,1)
     plt.imshow(arr[:,:,2], cmap='gray')
     plt.xlabel('Range')
     plt.ylabel('Azimuth')
     plt.title('lambda_1')
     plt.colorbar()
+    plt.savefig('/home/anurag/Documents/MScProject/Meetings_ITC/Results/'+'lambda_1'+'.tiff', dpi=300)
+    plt.clf()
     
-    plt.subplot(3,3,2)
+    #plt.subplot(3,3,2)
     plt.imshow(arr[:,:,1], cmap='gray')
     plt.xlabel('Range')
     plt.ylabel('Azimuth')
     plt.title('lambda_2')
     plt.colorbar()
+    plt.savefig('/home/anurag/Documents/MScProject/Meetings_ITC/Results/'+'lambda_2'+'.tiff', dpi=300)
+    plt.clf()
     
-    plt.subplot(3,3,3)
+    #plt.subplot(3,3,3)
     plt.imshow(arr[:,:,0], cmap='gray')
     plt.xlabel('Range')
     plt.ylabel('Azimuth')
     plt.title('lambda_3')
     plt.colorbar()
+    plt.savefig('/home/anurag/Documents/MScProject/Meetings_ITC/Results/'+'lambda_3'+'.tiff', dpi=300)
+    plt.clf()
     
-    plt.subplot(3,3,4)
+    #plt.subplot(3,3,4)
     plt.imshow(extract_polarimetric.entropy(arr), cmap='gray')
     plt.xlabel('Range')
     plt.ylabel('Azimuth')
     plt.title('Entropy')
     plt.colorbar()
+    plt.savefig('/home/anurag/Documents/MScProject/Meetings_ITC/Results/'+'Entropy'+'.tiff', dpi=300)
+    plt.clf()
     
-    plt.subplot(3,3,5)
+    #plt.subplot(3,3,5)
     plt.imshow(extract_polarimetric.anisotropy(arr), cmap='gray')
     plt.xlabel('Range')
     plt.ylabel('Azimuth')
     plt.title('Anisotropy')
     plt.colorbar()
+    plt.savefig('/home/anurag/Documents/MScProject/Meetings_ITC/Results/'+'Anisotropy'+'.tiff', dpi=300)
+    plt.clf()
     
-    plt.subplot(3,3,6)
+    #plt.subplot(3,3,6)
     plt.imshow(extract_polarimetric.pol_fraction(arr), cmap='gray')
     plt.xlabel('Range')
     plt.ylabel('Azimuth')
     plt.title('Pol_fraction')
     plt.colorbar()
+    plt.savefig('/home/anurag/Documents/MScProject/Meetings_ITC/Results/'+'Pol_fraction'+'.tiff', dpi=300)
+    plt.clf()
     
-    plt.subplot(3,3,7)
+    #plt.subplot(3,3,7)
     plt.imshow(extract_polarimetric.pedestal_height(arr), cmap='gray')
     plt.xlabel('Range')
     plt.ylabel('Azimuth')
     plt.title('pedestal_height')
     plt.colorbar()
+    plt.savefig('/home/anurag/Documents/MScProject/Meetings_ITC/Results/'+'pedestal_height'+'.tiff', dpi=300)
+    plt.clf()
     
-    plt.show()
+    #plt.show()
 
-def polarimetric_features(window_size):
-    fig, ax = plt.subplots(nrows=2, ncols=3)    
+def polarimetric_features(window_size,correction_switch):
+    #fig, ax = plt.subplots(nrows=2, ncols=3)    
     
     #arr=extract_polarimetric.eigen_raster_full(window_size)
-    cov_arr=extract_polarimetric.extract_covariance_arr(window_size, False)
+    cov_arr=extract_polarimetric.extract_covariance_arr(window_size, correction_switch)
     
-    plt.subplot(2,3,1)
+    #plt.subplot(2,3,1)
     plt.imshow(np.absolute(extract_polarimetric.co_pol_power_ratio_1(cov_arr)), cmap='gray')
     plt.xlabel('Range')
     plt.ylabel('Azimuth')
     plt.title('Ivv/Ihh (Co-pol power ratio)')
     plt.colorbar()
+    plt.savefig('/home/anurag/Documents/MScProject/Meetings_ITC/Results/'+'Ivv-Ihh_(Co-pol power ratio)'+'.tiff', dpi=300)
+    plt.clf()
     
-    plt.subplot(2,3,2)
+    #plt.subplot(2,3,2)
+    plt.imshow(incidence_angle_corr.hist_stretch(np.absolute(extract_polarimetric.determinant_cov(cov_arr)),6), cmap='gray')
+    plt.xlabel('Range')
+    plt.ylabel('Azimuth')
+    plt.title('Det(Cov)')
+    plt.colorbar()
+    plt.savefig('/home/anurag/Documents/MScProject/Meetings_ITC/Results/'+'Det(Cov)_stretched'+'.tiff', dpi=300)
+    plt.clf()
+    
+        #plt.subplot(2,3,2)
     plt.imshow(np.absolute(extract_polarimetric.determinant_cov(cov_arr)), cmap='gray')
     plt.xlabel('Range')
     plt.ylabel('Azimuth')
     plt.title('Det(Cov)')
     plt.colorbar()
+    plt.savefig('/home/anurag/Documents/MScProject/Meetings_ITC/Results/'+'Det(Cov)'+'.tiff', dpi=300)
+    plt.clf()
     
-    plt.subplot(2,3,3)
+    #plt.subplot(2,3,3)
     plt.imshow(np.absolute(extract_polarimetric.co_pol_diff(cov_arr)), cmap='gray')
     plt.xlabel('Range')
     plt.ylabel('Azimuth')
     plt.title('Co-pol diff (Ihh-Ivv)')
     plt.colorbar()
+    plt.savefig('/home/anurag/Documents/MScProject/Meetings_ITC/Results/'+'Co-pol diff(Ihh-Ivv)'+'.tiff', dpi=300)
+    plt.clf()
 
-    plt.subplot(2,3,4)
+    #plt.subplot(2,3,4)
     plt.imshow(np.real(extract_polarimetric.co_pol_cross_product(cov_arr)), cmap='gray')
     plt.xlabel('Range')
     plt.ylabel('Azimuth')
     plt.title('Real(ShhSvv) co-pol cross_product')
     plt.colorbar()
+    plt.savefig('/home/anurag/Documents/MScProject/Meetings_ITC/Results/'+'Real(ShhSvv) co-pol cross_product'+'.tiff', dpi=300)
+    plt.clf()
     
-    plt.subplot(2,3,5)
+    #plt.subplot(2,3,5)
     plt.imshow(np.imag(extract_polarimetric.co_pol_cross_product(cov_arr)), cmap='gray')
     plt.xlabel('Range')
     plt.ylabel('Azimuth')
     plt.title('Imag(ShhSvv) Co-pol cross_product')
     plt.colorbar()
+    plt.savefig('/home/anurag/Documents/MScProject/Meetings_ITC/Results/'+'Imag(ShhSvv) Co-pol cross_product', dpi=300)
+    plt.clf()
     
-    plt.show()
+    #plt.show()
 
-def Pauli_RGB_array(window_size, correction):
-    cov_arr=extract_polarimetric.extract_covariance_arr(window_size, correction)
-    Shh=np.real(cov_arr[:,:,0,0])
-    Svv=np.real(cov_arr[:,:,2,2])
-    Shv=np.real(cov_arr[:,:,1,1])
-    b=hist_stretch_all(Shh+Svv, 0)
-    r=hist_stretch_all(np.absolute(Shh-Svv), 0)
-    g=hist_stretch_all(Shv, 0)
-    img_arr=np.dstack((r,g,b))
-    return img_arr
-
-
-def plot_Paui_RGB(window_size, correction):
-    img_arr=Pauli_RGB_array(window_size, correction)
-    #test_arr=[Shh, Shv, Svv]
-    #print(test_arr)
-    #print(r)
-    #img_arr=np.dstack((Shh-Svv,Shv,Shh+Svv))#, axis=2)
-    #print((img_arr[:,:,0]))
-    #print(Shh)
-    #img_arr=
-    #print(img_arr.shape)
-    #img=Image.fromarray(img_arr, 'HSV')
-    #plot_histogram(g,'','','',50,.05)
-    plt.imshow(img_arr)
+def plot_Pauli_comp(window_size, correction, degree):
+    img_arr=decomposition.Pauli_RGB_array(window_size, correction, degree)
+    #img_arr=decomposition.krogager_array(window_size, correction, degree)
+    #img_arr[...,2]=hist_stretch_all(img_arr[...,2], 0, clip_extremes)
+    #img_arr[...,0]=hist_stretch_all(img_arr[...,0], 0, clip_extremes)
+    #img_arr[...,1]=hist_stretch_all(img_arr[...,1], 0, clip_extremes)
+    plt.subplot(1,3,1)
+    plt.imshow(10*np.log10(img_arr[...,0]), cmap='RdYlGn')
+    plt.title('alpha')
+    plt.colorbar()
+    plt.xlabel('Range')
+    plt.ylabel('Azimuth')
+    
+    plt.subplot(1,3,2)
+    plt.imshow(10*np.log10(img_arr[...,1]), cmap='RdYlGn')
+    plt.title('Beta')
+    plt.colorbar()
+    plt.xlabel('Range')
+    plt.ylabel('Azimuth')
+    
+    plt.subplot(1,3,3)
+    plt.imshow(10*np.log10(img_arr[...,2]), cmap='RdYlGn')
+    plt.title('Gamma')
+    plt.colorbar()
+    plt.xlabel('Range')
+    plt.ylabel('Azimuth')
     #img.show()
     #plt.imshow(g)
     plt.show()
 
+def plot_Pauli_RGB(window_size, correction, degree):
+    clip_extremes=True
+    img_arr=decomposition.Pauli_RGB_array(window_size, correction, degree)
+    #img_arr=decomposition.krogager_array(window_size, correction, degree)
+    #print(img_arr.shape)
+    r=hist_stretch_all(img_arr[...,0], 0, clip_extremes)
+    b=hist_stretch_all(img_arr[...,2], 0, clip_extremes)
+    g=hist_stretch_all(img_arr[...,1], 0, clip_extremes)
+    return np.dstack((r,g,b))    
+
+def plot_freeman_RGB(window_size, correction, degree):
+    clip_extremes=True
+    img_arr=decomposition.Freeman_Durdun_Decomposition(window_size, correction, degree)
+    img_arr=np.absolute(img_arr)
+    
+    r=hist_stretch_all(img_arr[...,1], 0, clip_extremes)
+    b=hist_stretch_all(img_arr[...,0], 0, clip_extremes)
+    g=hist_stretch_all(img_arr[...,2], 0, clip_extremes)
+    fig=plt.figure()
+    gridspec.GridSpec(3,3)
+    #plt.subplot(2,3,2)
+    plt.subplot2grid((3,3), (0,0), colspan=2, rowspan=3)
+    plt.imshow(np.dstack((r,g,b)))
+    plt.title('Freeman RGB')
+    #plt.colorbar(orientation='horizontal', label='dB')
+    plt.xlabel('Range')
+    plt.ylabel('Azimuth')
+    
+    #plt.subplot(2,3,4)
+    plt.subplot2grid((3,3), (0,2))
+    plt.imshow(10*np.log10(img_arr[...,0]), cmap='Blues')
+    plt.title('Ps')
+    plt.colorbar(orientation='vertical', label='dB')
+    plt.xlabel('Range')
+    plt.ylabel('Azimuth')
+    
+    #plt.subplot(2,3,5)
+    plt.subplot2grid((3,3), (1,2))
+    plt.imshow(10*np.log10(img_arr[...,1]), cmap='Reds')
+    plt.title('Pd')
+    plt.colorbar(orientation='vertical', label='dB')
+    plt.xlabel('Range')
+    plt.ylabel('Azimuth')
+    
+    #plt.subplot(2,3,6)
+    plt.subplot2grid((3,3), (2,2))
+    plt.imshow(10*np.log10(img_arr[...,2]), cmap='Greens')
+    plt.title('Pv')
+    plt.colorbar(orientation='vertical', label='dB')
+    plt.xlabel('Range')
+    plt.ylabel('Azimuth')
+    #img.show()
+    #plt.imshow(g)
+    #plt.show()
+
 def add_patch(image_arr, top_left_id, extent_row, extent_col):
     rect = patches.Rectangle(top_left_id, extent_row, extent_col, linewidth=1,edgecolor='r',facecolor='none')
-    fig,ax = plt.subplots(1)
-    ax.imshow(image_arr)
-    ax.add_patch(rect)
+    ax = plt.subplot(1,1,1)
+    plt.imshow(image_arr)
+    ax.add_artist(rect)
+    plt.colorbar()
     plt.show()
     
 
-def hist_stretch_all(arr, bits, clip_extremes=True):
+def hist_stretch_all(arr, bits, clip_extremes):
     #bands=arr.shape[-1]
     
     n=arr.shape
@@ -245,7 +339,9 @@ def hist_stretch_all(arr, bits, clip_extremes=True):
         
     #return new_arr
     if(bits==0):
-        new_arr=(new_arr-per_min)/(per_max-per_min)
+        min_=np.amin(new_arr)
+        max_=np.amax(new_arr)
+        new_arr=(new_arr-min_)/(max_-min_)
     else:
         new_arr=np.floor((2**bits-1)*(new_arr-per_min)/(per_max-per_min))
     return new_arr
@@ -269,7 +365,7 @@ def plot_histogram(image_arr, xlabel, ylabel, title, bins, width):
     #plt.hist(arr_hist[::-1], bins='auto')
     #plt.plot(arr_hist[1], np.append(arr_hist[0],256))
     #print(bins[:-1], H)
-    #fig, ax = plt.subplots()
+    fig, ax = plt.subplots()
     ax.bar(bins[:-1], H, width=width)# color='r')
     #ax.set_ylim(0,450)
     ax.set_ylabel(ylabel)
@@ -277,7 +373,7 @@ def plot_histogram(image_arr, xlabel, ylabel, title, bins, width):
     ax.set_title(title)
     #ax.set_xticks(np.add(x,(width/2))) # set the position of the x ticks
     #ax.set_xticklabels(('X1', 'X2', 'X3', 'X4', 'X5'))
-    #plt.show()
+    plt.show()
 
 def RISAT_features():
     S_array=read_RISAT1.img_to_array() #dim=X,Y,2
@@ -369,7 +465,7 @@ def plot_phase_velocity(gravity,sur_ten, density, lambda_range):
     cap_oil_plot=plt.plot(lambda_power,capillary_oil,'k--', label='$c_{cap}^{oil}$')
     gravity_plot=plt.plot(lambda_power,gravity_waves,'m--' , label='$c_{grav}$')
     
-    plt.xlabel('Wavelength ($\lambda$) (cm)')
+    plt.xlabel('Wavelength ($\lambda$) (cm)')#'$xyx_{o}$'
     plt.ylabel('Phase Velocity (cm/s)')
     plt.xticks(x_tick_num, xtick_label)
     plt.legend()
@@ -379,18 +475,79 @@ def plot_phase_velocity(gravity,sur_ten, density, lambda_range):
     #'$c_{tot}^{water}$','$c_{tot}^{oil}$','$c_{cap}^{water}$','$c_{cap}^{oil}$','$c_{grav}$'
     plt.show()
     
+def plot_transect(arr, line_list, axis, name_array):#axis=0 for, 1 for column
+    shp=arr.shape
+    if(axis==0):
+        transect_arr=arr[line_list,:,...]
+        count=0
+        for row in transect_arr:
+            #print(row)
+            #print(np.arange(shp[0]))
+            plt.plot(np.arange(shp[1])+1, row.flatten(), label=name_array[count])
+            count+=1
+        plt.legend()
+        plt.show()
+    elif(axis==1):
+        transect_arr=arr[:,line_list,...]
+        count=0
+        for col in transect_arr.T:
+            plt.plot(np.arange(shp[0])+1, col.flatten(), label=name_array[count])
+            count+=1
+        plt.legend()
+        plt.show()
+
+def plot_transect_two_arr(arr1, arr2, line_list, name_array, element_id):
+    shp=arr1.shape
+    plt.subplots(len(line_list),1)
+    plt.title('Intensity - VV channel incidence angle correction')
+    count=1
+    for line in line_list:
+        transect_arr1=arr1[line:line+10,:,element_id[0],element_id[1]].mean(0)
+        transect_arr2=arr2[line:line+10,:,element_id[0],element_id[1]].mean(0)
+        
+        missing=np.arange(521, 1538, 1)
+        inc_array=fit_inci_model.extrapolate_inc_angle(missing)
+        #plt.plot(np.arange(shp[1])+1, transect_arr1.flatten(), 'r-',label=name_array[0])
+        #plt.plot(np.arange(shp[1])+1, transect_arr2.flatten(), 'b-',label=name_array[1])
+        plt.subplot(len(line_list),1,count)
+        plt.plot(inc_array, np.absolute(transect_arr1).flatten(), 'r-',label='row='+str(line)+'_inc_corr=false')
+        plt.plot(inc_array, np.absolute(transect_arr2).flatten(), 'b-',label='row='+str(line)+'_inc_corr=true')
+        plt.ylabel('Linear Amplitude', fontsize=15)
+        plt.legend(fontsize=15)
+        #plt.clf()
+        count+=1
+    plt.xlabel(r'Incidence angle ($\theta_{i}^{0}$) ', fontsize=15)
+    plt.ylabel('Linear Amplitude')
+    
+    plt.tight_layout()
+    
+    plt.savefig('/home/anurag/Documents/MScProject/Meetings_ITC/Results/inci_corr.tiff', dpi=300, papertype='a4', bbox_inches='tight')
+    
+    plt.show()
+
 if __name__=='__main__':
+    window_size=9
+    correction_switch=False
+    degree=1
+    #directory='../North_Sea_UAVSAR/UAV_norway/UA_norway_00709_15092_000_150610_L090_CX_01/MLC_Python_New/norway_00709_15092_000_150610_L090_CX_01_mlc'
+    os.chdir(directory)
     #plot_covariance_matrix_elements(1, True)
     #image_arr=incidence_angle_corr.read_Raster('C3', 'C33')
     #img_arr_dB=incidence_angle_corr.convert_to_dB(image_arr)
     #cloude_pottier(9)
-    #polarimetric_features(9)
-    #plot_Paui_RGB(1,False)
-    #pauli_arr=Pauli_RGB_array(1,False)
-    #add_patch(pauli_arr, (4049,521), 1185, 1025)
+    #polarimetric_features(9, True)
+    
+    #plot_Pauli_comp(window_size,correction_switch,degree)
+    pauli_arr=plot_Pauli_RGB(window_size,correction_switch,degree)
+    add_patch(pauli_arr, (104,52), 118, 100) #(1049,521), 1185, 1025)
+    
+    #plot_freeman_RGB(window_size, correction_switch, degree)
+    #free
+    
     #plot_histogram(img_arr_dB, 'sigma nought (VV) (deciBels)', 'Frequency', 'Histogram of Ivv in deciBels','auto', 0.1)
     
     #plot_histogram(image_arr, 'sigma nought (VV) (Linear Units)', 'Frequency', 'Histogram of Ivv linear units','auto', 0.0005)
     #RISAT_features()
     #plot_feature_space_test(30)
-    plot_phase_velocity(980,33,0.9,[0.1,50, 0.01])
+    
+    #plot_phase_velocity(980,33,0.9,[0.1,50, 0.01])

@@ -9,7 +9,7 @@ from math import pi
 import plotting
 
 
-#os.chdir('../North_Sea_UAVSAR/UAV_norway/UA_norway_00709_15092_000_150610_L090_CX_01/MLC_Python_New/norway_00709_15092_000_150610_L090_CX_01_mlc')
+
 #print(os.getcwd())
 
 peg_lati=59.950769 #m
@@ -94,7 +94,31 @@ def plot_histogram(image_arr):
     plt.bar(bins[:-1], H, width=0.001)
     plt.show()
 
-def inci_correction(matrix, element):# https://doi.org/10.1016/S0034-4257(01)00279-6
+def estimate_degree(matrix, element):
+    angle_arr=get_inc_ang_array()
+    #plt.plot(angle_arr)
+    #plt.show()
+    ref_angle=np.mean(angle_arr)
+    img_raster_arr=read_Raster(matrix, element)
+    rows=img_raster_arr.shape[0]
+    n_tot=np.empty((rows,))
+    #sigma_corr=np.
+    for i in range(0,rows):
+        sigma=img_raster_arr[i,:]
+        sigma=np.absolute(sigma)
+        #plt.plot(sigma)
+        #plt.show()
+        #return 0
+        #print(img_raster_arr.shape)
+        #print(sigma.shape)
+        pl=np.polyfit(np.sin(angle_arr/180*pi)/np.sin(ref_angle/180*pi), np.log(sigma),1)
+        #plt.plot(np.cos(angle_arr))
+        n, sigma_corr=pl[0], np.exp(pl[1])
+        #plt.plot()
+        n_tot[i]=n
+    return n_tot
+    
+def inci_correction(matrix, element, degree):# https://doi.org/10.1016/S0034-4257(01)00279-6
     angle_arr=get_inc_ang_array()
     ref_angle=np.mean(angle_arr)
     img_raster_arr=read_Raster(matrix, element)
@@ -103,8 +127,12 @@ def inci_correction(matrix, element):# https://doi.org/10.1016/S0034-4257(01)002
     #raster_arr[:,[5]]= raster_arr[:,[5]]*20
     #return raster_arr[:,[4,5]]
     for i in range(0,img_raster_arr.shape[1]):
-        img_raster_arr[:,[i]]=img_raster_arr[:,[i]]*np.sin(angle_arr[i]/180*pi)
-    img_raster_arr=img_raster_arr/np.sin(ref_angle/180*pi)
+        #img_raster_arr[:,[i]]=img_raster_arr[:,[i]]*np.sqrt(np.sin(angle_arr[i]/180*pi)) #square root as given in espeseth et.al.
+        img_raster_arr[:,[i]]=img_raster_arr[:,[i]]*(np.sin(angle_arr[i]/180*pi))**degree # try for a multiplication foactor of square of sin of inc-angle
+        #img_raster_arr[:,[i]]=img_raster_arr[:,[i]]*np.sin(angle_arr[i]/180*pi)
+    #img_raster_arr=img_raster_arr/np.sqrt(np.sin(ref_angle/180*pi))
+    img_raster_arr=img_raster_arr/(np.sin(ref_angle/180*pi))**degree
+    #img_raster_arr=img_raster_arr/np.sin(ref_angle/180*pi)
     #return (angle_arr.shape,raster_arr.shape)
     return img_raster_arr
     #print(angle_arr.shape)
@@ -114,15 +142,42 @@ def inci_correction(matrix, element):# https://doi.org/10.1016/S0034-4257(01)002
 
 
 if __name__=='__main__':
+    #os.chdir('../North_Sea_UAVSAR/UAV_norway/UA_norway_00709_15092_000_150610_L090_CX_01/MLC_Python_New/norway_00709_15092_000_150610_L090_CX_01_mlc')
     #print(inci_correction())
-    image_arr=read_Raster('C3', 'C33')
-    hist_image_arr=hist_stretch(image_arr, 5, False)
+    #image_arr=read_Raster('C3', 'C33')
+    #hist_image_arr=hist_stretch(image_arr, 5, False)
     #image_arr=inci_correction()
     #display(image_arr)
     #display(hist_stretch(image_arr,6), 'Range(pixel#)', 'Azimuth (pixel #)', 'No incidence angle correction applied')
     #display(hist_stretch(inci_correction('C3', 'C33'),6), 'Range(pixel#)', 'Azimuth(pixel#)', 'Incidence angle correction applied')
+    #plotting.plot_transect(image_arr, [100,200], 1, ['row_100','row_200'])
+    
+    #===========PLOTTING TRANSECT=============
+    #plotting.plot_transect_two_arr(image_arr, inci_correction('C3', 'C33'), 100, ['row100, original','row100, inc_corrected'])
     #print(get_image_geo_details('C3', 'C33'))
     #plotting.plot_histogram(hist_image_arr, 'sigma nought (VV) (Linear Units)', 'Frequency', 'Histogram of C33 after linear stretching and clipping extreme values(2.5%, 97.5%)',32, 0.1)
-    plotting.plot_histogram(hist_image_arr, 'sigma nought (VV) (Linear Units)', 'Frequency', 'Histogram of C33 after linear stretching only',32, 3)
+    #plotting.plot_histogram(hist_image_arr, 'sigma nought (VV) (Linear Units)', 'Frequency', 'Histogram of C33 after linear stretching only',32, 3)
     
     #plot_histogram(hist_image_arr)
+    
+    #===========Estimating_degree===============
+    
+    n=estimate_degree('C3', 'C12_real')
+    plt.plot(n, 'k.-')
+    plt.show()
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    

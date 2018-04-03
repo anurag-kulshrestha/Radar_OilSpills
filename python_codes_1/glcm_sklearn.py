@@ -4,6 +4,10 @@ from numpy import pi
 import incidence_angle_corr
 import math
 import time
+import reproject
+from matplotlib import pyplot as plt
+import os
+from numpy import pi
 
 image = np.array([[0, 0, 1, 1],\
                   [0, 0, 1, 1],\
@@ -23,7 +27,7 @@ def return_texture_value(direction, distance, imag_arr, texture):
     texture=greycoprops(glcm, texture)
     return texture
 
-def occurance_kernel(distance, direction, texture_method, window_size, stride_row, stride_col):
+def occurance_kernel(distance, direction, texture_method, window_size, stride_row, stride_col):#for one distance and 2 directions 0 and 90 degrees
     img_arr_hist_inci_corr=incidence_angle_corr.hist_stretch(incidence_angle_corr.inci_correction('C3', 'C33'), 5)
     
     rows=img_arr_hist_inci_corr.shape[0]
@@ -42,19 +46,42 @@ def occurance_kernel(distance, direction, texture_method, window_size, stride_ro
         res_col=0
         res_row+=1
         max_res_row=res_row
-    print(res.shape)
-    print(max_res_col, max_res_row)
+    #print(res.shape)
+    #print(max_res_col, max_res_row)
     if(max_res_row<res.shape[0]):
         res=np.delete(res, np.s_[-1*(res.shape[0]-max_res_row):],0)
     if(max_res_col<res.shape[1]):
         res=np.delete(res, np.s_[-1*(res.shape[1]-max_res_col):],1)
-        
+    return res
     #print(res[...,0,1])
-    incidence_angle_corr.display(res[...,0,0], 'Range(pixel#)', 'Azimuth (pixel #)', 'Contrast GLCM feature(method='+texture_method+'dir='+str(direction[0])+', window_size='+str(window_size)+', row_stride='+str(stride_row)+', col_stride='+str(stride_col)+')')
-    incidence_angle_corr.display(res[...,0,1], 'Range(pixel#)', 'Azimuth (pixel #)', 'Contrast GLCM feature(method='+texture_method+'dir='+str(direction[1])+', window_size='+str(window_size)+', row_stride='+str(stride_row)+', col_stride='+str(stride_col)+')')
     
+    
+
+def save_reproject_contextual_features(distance, direction, window_size, stride_row, stride_col):
+    texture_method=['contrast', 'dissimilarity', 'homogeneity', 'energy', 'correlation', 'ASM']
+    #print(return_texture_value([0, np.pi/2],[1], image, 'energy'))
+    for method in texture_method:
+        res_array=occurance_kernel(distance, direction,method, window_size, stride_row, stride_col)
+        for dir_ in range(len(direction)):
+            array_name='Contrast_GLCM_feature_method-'+method+'_dir-'+str(direction[dir_]/pi)+'$\pi$, window_size='+str(window_size)+', row_stride='+str(stride_row)+', col_stride='+str(stride_col)+')'
+            #incidence_angle_corr.display(res_array[...,0,dir_], 'Range(pixel#)', 'Azimuth (pixel #)', array_name)
+            plt.imshow(res_array[...,0,dir_], cmap='gray')
+            #plt.set_yticklabels()
+            plt.xlabel('Range(pixel#)')
+            plt.ylabel('Azimuth (pixel #)')
+            #plt.title('('+mat_ele+') '+title)
+            #plt.title(array_name)
+            plt.colorbar()
+            #plt.show()
+            #incidence_angle_corr.display(res[...,0,dir_], 'Range(pixel#)', 'Azimuth (pixel #)', 'Contrast GLCM feature(method='+method+'dir='+str(dir_)+', window_size='+str(window_size)+', row_stride='+str(stride_row)+', col_stride='+str(stride_col)+')')
+            reproject.save_tiff_image(array_name, res_array[...,0,dir_], window_size)
+            os.chdir('../')
+            plt.savefig('/home/anurag/Documents/MScProject/Meetings_ITC/Results/'+array_name+'.tiff', dpi=300)
+            plt.clf()
+            
 if __name__=='__main__':
     #{‘contrast’, ‘dissimilarity’, ‘homogeneity’, ‘energy’, ‘correlation_NO’, ‘ASM’}
     #print(return_texture_value([0, np.pi/2],[1], image, 'energy'))
     
-    occurance_kernel([1], [0, np.pi/2],'ASM', 15, 10,10)
+    #occurance_kernel([1], [0, np.pi/2],'ASM', 9, 1,1)
+    save_reproject_contextual_features([1], [0, np.pi/2], 9, 1,1)

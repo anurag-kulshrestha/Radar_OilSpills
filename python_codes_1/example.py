@@ -1,0 +1,2 @@
+import numpy
+#cimport numpy

@@ -61,7 +61,7 @@ def calc_weight(method, arr):
     radio_bit=arr_uni.size
     weight=np.zeros((radio_bit, radio_bit))
     #index=np.indices((radio_bit,radio_bit))
-    if(method==0): #0=contrast
+    if(method==0): #0=contrast  
         #return (index[0]-index[1])**2
         for i in range(0,radio_bit):
             for j in range(0,radio_bit):
